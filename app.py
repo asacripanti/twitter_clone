@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm
+from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
 from models import db, connect_db, User, Message
 
 CURR_USER_KEY = "curr_user"
@@ -12,7 +12,7 @@ CURR_USER_KEY = "curr_user"
 app = Flask(__name__)
 
 # Get DB_URI from environ variable (useful for production/testing) or,
-# if not set there, use development local db.
+# if not set there, use development local db.message:%3Cea94369dd81941ef9c72b3522e17210e@608%3E
 app.config['SQLALCHEMY_DATABASE_URI'] = (
     os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
 
@@ -114,6 +114,9 @@ def login():
 @app.route('/logout')
 def logout():
     """Handle logout of user."""
+    session.pop(CURR_USER_KEY)
+    flash('Successfully logged out')
+    return redirect("/login")
 
     # IMPLEMENT THIS
 
@@ -209,9 +212,37 @@ def stop_following(follow_id):
     return redirect(f"/users/{g.user.id}/following")
 
 
-@app.route('/users/profile', methods=["GET", "POST"])
-def profile():
+@app.route('/users/edit_profile', methods=["GET", "POST"])
+def edit_profile():
     """Update profile for current user."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = g.user
+    form = UserEditForm(obj=user)
+
+    if form.validate_on_submit():
+        if User.authenticate(user.username, form.password.data):
+            user.username = form.username.data
+            user.email = form.email.data
+            user.image_url = form.image_url.data or "/static/images/default-pic.png"
+            user.header_image_url = form.header_image_url.data or "/static/images/warbler-hero.jpg"
+            user.bio = form.bio.data
+
+            db.session.commit()
+            return redirect(f"/users/{user.id}")
+
+        flash("Error") 
+
+    return render_template('users/edit.html', form=form, user_id=user.id)       
+
+    return render_template("users/edit.html", form=form)
+
+
+
+
 
     # IMPLEMENT THIS
 
@@ -234,6 +265,29 @@ def delete_user():
 
 ##############################################################################
 # Messages routes:
+
+@app.route('/users/add_like/<int:message_id>', methods=['POST'])
+def like_message(message_id):
+    """Like or unlike a message"""
+
+    if not g.user:
+        flash("Access denied.", "danger")
+        return redirect("/")
+
+    message = Message.query.get_or_404(message_id)
+   
+
+    if g.user.likes_message(message):
+        g.user.likes.remove(message)
+
+    else:
+        g.user.likes.append(message)        
+
+
+    db.session.commit()
+
+    return redirect("/")    
+
 
 @app.route('/messages/new', methods=["GET", "POST"])
 def messages_add():
@@ -294,8 +348,11 @@ def homepage():
     """
 
     if g.user:
+        following_ids = [f.id for f in g.user.following] + [g.user.id]
+
         messages = (Message
                     .query
+                    .filter(Message.user_id.in_(following_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())

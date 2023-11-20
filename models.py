@@ -115,6 +115,10 @@ class User(db.Model):
         secondary="likes"
     )
 
+    def likes_message(user, message_id):
+        """Check if the user likes a particular message."""
+        return any(like.id == message_id for like in user.likes)
+
     def __repr__(self):
         return f"<User #{self.id}: {self.username}, {self.email}>"
 

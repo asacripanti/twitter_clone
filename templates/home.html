@@ -40,7 +40,7 @@
 
     <div class="col-lg-6 col-md-8 col-sm-12">
       <ul class="list-group" id="messages">
-        {% for msg in messages %}
+        {% for msg in messages %} 
           <li class="list-group-item">
             <a href="/messages/{{ msg.id  }}" class="message-link"/>
             <a href="/users/{{ msg.user.id }}">
@@ -57,7 +57,11 @@
                 btn-sm 
                 {{'btn-primary' if msg.id in likes else 'btn-secondary'}}"
               >
-                <i class="fa fa-thumbs-up"></i> 
+              {% if msg.id in g.user.likes %}
+              <i class="fa fa-star"></i>  {# Add a star icon if liked #}
+              {% else %}
+                <i class="fa fa-thumbs-up"></i>  {# Show thumbs-up icon if not liked #}
+              {% endif %}
               </button>
             </form>
           </li>
