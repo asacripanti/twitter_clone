@@ -57,7 +57,7 @@
                 btn-sm 
                 {{'btn-primary' if msg.id in likes else 'btn-secondary'}}"
               >
-              {% if msg.id in g.user.likes %}
+              {% if msg.id in liked_message_ids %}
               <i class="fa fa-star"></i>  {# Add a star icon if liked #}
               {% else %}
                 <i class="fa fa-thumbs-up"></i>  {# Show thumbs-up icon if not liked #}
