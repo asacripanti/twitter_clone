@@ -349,13 +349,29 @@ def homepage():
 
     if g.user:
         following_ids = [f.id for f in g.user.following] + [g.user.id]
+        liked_message_ids = [item.id for item in g.user.likes]
 
         messages = (Message
                     .query
-                    .filter(Message.user_id.in_(following_ids))
+                    # .filter(Message.user_id.in_(following_ids))
                     .order_by(Message.timestamp.desc())
                     .limit(100)
                     .all())
+
+        ids = []
+        idsmsg = []
+        for i in g.user.likes:
+            ids.append(i.id)
+
+        for msg in messages:
+            idsmsg.append(msg.id)   
+
+        print(ids)
+        print('hello')
+        print(g.user.likes)
+        print(liked_message_ids)
+       
+                
 
         return render_template('home.html', messages=messages)
 
