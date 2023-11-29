@@ -13,8 +13,10 @@ app = Flask(__name__)
 
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.message:%3Cea94369dd81941ef9c72b3522e17210e@608%3E
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
+# app.config['SQLALCHEMY_DATABASE_URI'] = (
+#     os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
+password = "admin"
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://postgres:{password}@localhost/warbler'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
@@ -37,9 +39,11 @@ def add_user_to_g():
 
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
+        g.liked_message_ids = [item.id for item in g.user.likes]
 
     else:
         g.user = None
+        g.liked_message_ids = []
 
 
 def do_login(user):
@@ -349,7 +353,6 @@ def homepage():
 
     if g.user:
         following_ids = [f.id for f in g.user.following] + [g.user.id]
-        liked_message_ids = [item.id for item in g.user.likes]
 
         messages = (Message
                     .query
@@ -365,11 +368,6 @@ def homepage():
 
         for msg in messages:
             idsmsg.append(msg.id)   
-
-        print(ids)
-        print('hello')
-        print(g.user.likes)
-        print(liked_message_ids)
        
                 
 
