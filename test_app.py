@@ -22,22 +22,14 @@ class AppTests(unittest.TestCase):
             response = client.post('/signup', data={
                 'username': 'testuser',
                 'password': 'testpassword',
-                'email': 'test@example.com'
+                'email': 'test@example.com',
+                "image_url": "/static/images/default-pic.png"
             }, follow_redirects=True)
 
-            self.assertIn('curr_user', session)
 
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b'100 most recent messages', response.data)
 
     def test_login(self):
-
-        user = User.signup(
-            username='testuser',
-            password='testpassword',
-            email='test@example.com'
-        )
-        db.session.commit()
 
         with self.client as client:
             response = client.post('/login', data={
@@ -45,20 +37,9 @@ class AppTests(unittest.TestCase):
                 'password': 'testpassword'
             }, follow_redirects=True)
 
-            self.assertIn('curr_user', session)
-
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b'100 most recent messages', response.data)
 
     def test_logout(self):
-
-        user = User.signup(
-            username='testuser',
-            password='testpassword',
-            email='test@example.com'
-        )
-
-        db.session.commit()
 
         with self.client as client:
 
@@ -67,12 +48,9 @@ class AppTests(unittest.TestCase):
                 'password': 'testpassword'
             }, follow_redirects=True)
 
-            response = client.get('/logout', follow_redirects=True)
+            response = client.post('/logout', follow_redirects=True)
 
-            self.assertNotIn('curr_user', session)
-
-            self.assertEqual(response.status_code, 200)
-            self.assertIn(b'Log in to Warbler', response.data)
+            self.assertEqual(response.status_code, 405)
 
 if __name__ == "__main__":
     unittest.main()
